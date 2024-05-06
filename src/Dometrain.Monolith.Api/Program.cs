@@ -38,6 +38,8 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
+builder.Services.AddMetrics();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
 builder.Services.AddSwaggerGen(x => x.OperationFilter<SwaggerDefaultValues>());
