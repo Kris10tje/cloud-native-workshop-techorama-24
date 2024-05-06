@@ -1,5 +1,6 @@
 using Dometrain.Monolith.Api.Courses;
 using Dometrain.Monolith.Api.Students;
+using StackExchange.Redis;
 
 namespace Dometrain.Monolith.Api.ShoppingCarts;
 

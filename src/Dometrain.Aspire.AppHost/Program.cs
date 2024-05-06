@@ -9,11 +9,15 @@ var mainDb = builder
     .WithDataVolume()
     .AddDatabase("dometrain");
 
+var redis = builder.AddRedis("redis");
+
 var cartDb = builder.AddAzureCosmosDB("cosmosdb")
     .AddDatabase("cartdb");
 
 builder.AddProject<Projects.Dometrain_Monolith_Api>("dometrain-api")
+    .WithReplicas(5)
     .WithReference(mainDb)
-    .WithReference(cartDb);
+    .WithReference(cartDb)
+    .WithReference(redis);
 
 builder.Build().Run();

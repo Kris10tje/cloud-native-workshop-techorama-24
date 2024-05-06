@@ -1,5 +1,7 @@
+using System.Text.Json;
 using Dapper;
 using Dometrain.Monolith.Api.Database;
+using StackExchange.Redis;
 
 namespace Dometrain.Monolith.Api.Courses;
 
@@ -82,5 +84,72 @@ public class CourseRepository : ICourseRepository
         var result = await connection.ExecuteAsync(
             "delete from courses where id = @id", new { id });
         return result > 0;
+    }
+}
+
+
+public class CachedCourseRepository : ICourseRepository
+{
+    private readonly ICourseRepository _courseRepository;
+    private readonly IConnectionMultiplexer _connectionMultiplexer;
+
+    public CachedCourseRepository(ICourseRepository courseRepository, IConnectionMultiplexer connectionMultiplexer)
+    {
+        _courseRepository = courseRepository;
+        _connectionMultiplexer = connectionMultiplexer;
+    }
+
+    public async Task<Course?> CreateAsync(Course course)
+    {
+        var created = await _courseRepository.CreateAsync(course);
+        if (created is null)
+        {
+            return created;
+        }
+
+        var db = _connectionMultiplexer.GetDatabase();
+        var serializedCourse = JsonSerializer.Serialize(course);
+        await db.StringSetAsync($"course_id_{course.Id}", serializedCourse);
+        return created;
+    }
+
+    public async Task<Course?> GetByIdAsync(Guid id)
+    {
+        var db = _connectionMultiplexer.GetDatabase();
+        var cachedCourse = await db.StringGetAsync($"course_id_{id}");
+        if (!cachedCourse.IsNull)
+        {
+            return JsonSerializer.Deserialize<Course>(cachedCourse.ToString());
+        }
+
+        var course = await _courseRepository.GetByIdAsync(id);
+        if (course is null)
+        {
+            return course;
+        }
+        
+        var serializedCourse = JsonSerializer.Serialize(course);
+        await db.StringSetAsync($"course_id_{course.Id}", serializedCourse);
+        return course;
+    }
+
+    public Task<Course?> GetBySlugAsync(string slug)
+    {
+        return _courseRepository.GetBySlugAsync(slug);
+    }
+
+    public Task<IEnumerable<Course>> GetAllAsync(string nameFilter, int pageNumber, int pageSize)
+    {
+        return _courseRepository.GetAllAsync(nameFilter, pageNumber, pageSize);
+    }
+
+    public Task<Course?> UpdateAsync(Course course)
+    {
+        return _courseRepository.UpdateAsync(course);
+    }
+
+    public Task<bool> DeleteAsync(Guid id)
+    {
+        return _courseRepository.DeleteAsync(id);
     }
 }
