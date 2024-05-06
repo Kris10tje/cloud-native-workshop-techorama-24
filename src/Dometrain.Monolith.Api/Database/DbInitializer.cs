@@ -1,4 +1,5 @@
 using Dapper;
+using Npgsql;
 
 namespace Dometrain.Monolith.Api.Database;
 
@@ -15,6 +16,21 @@ public class DbInitializer
     {
         using var connection = await _dbConnectionFactory.CreateConnectionAsync();
 
+        #region MEGAHACKDONTLOOK
+        var hackingShit = connection.ConnectionString.Split(';');
+        var goodOnes = hackingShit.Where(x => !x.Contains("database"));
+        var topLevelString = string.Join(';', goodOnes);
+        var topConnection = new NpgsqlConnection(topLevelString);
+        try
+        {
+            await topConnection.ExecuteAsync("CREATE DATABASE dometrain");
+        }
+        catch
+        {
+        }
+        await topConnection.CloseAsync();
+        #endregion
+        
         var script = """
                      create table if not exists students
                      (
