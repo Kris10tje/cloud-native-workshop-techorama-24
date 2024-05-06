@@ -23,6 +23,7 @@ var config = builder.Configuration;
 builder.AddServiceDefaults();
 
 builder.AddNpgsqlDataSource("dometrain");
+builder.AddAzureCosmosDBClient("cosmosdb");
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
