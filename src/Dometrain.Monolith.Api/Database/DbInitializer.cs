@@ -6,19 +6,21 @@ namespace Dometrain.Monolith.Api.Database;
 public class DbInitializer
 {
     private readonly IDbConnectionFactory _dbConnectionFactory;
+    private readonly IConfiguration _configuration;
 
-    public DbInitializer(IDbConnectionFactory dbConnectionFactory)
+    public DbInitializer(IDbConnectionFactory dbConnectionFactory, IConfiguration configuration)
     {
         _dbConnectionFactory = dbConnectionFactory;
+        _configuration = configuration;
     }
 
     public async Task InitializeAsync()
     {
-        using var connection = await _dbConnectionFactory.CreateConnectionAsync();
-
+        
         #region MEGAHACKDONTLOOK
-        var hackingShit = connection.ConnectionString.Split(';');
-        var goodOnes = hackingShit.Where(x => !x.Contains("database"));
+        var connectionStringForNow = _configuration["ConnectionStrings:dometrain"]!;
+        var hackingShit = connectionStringForNow.Split(';');
+        var goodOnes = hackingShit.Where(x => !x.Contains("Database"));
         var topLevelString = string.Join(';', goodOnes);
         var topConnection = new NpgsqlConnection(topLevelString);
         try
@@ -30,6 +32,8 @@ public class DbInitializer
         }
         await topConnection.CloseAsync();
         #endregion
+        
+        using var connection = await _dbConnectionFactory.CreateConnectionAsync();
         
         var script = """
                      create table if not exists students
