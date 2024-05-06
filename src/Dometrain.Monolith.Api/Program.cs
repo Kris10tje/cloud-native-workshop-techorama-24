@@ -1,4 +1,5 @@
 using System.Text;
+using Dometrain.Monolith.Api;
 using Dometrain.Monolith.Api.Courses;
 using Dometrain.Monolith.Api.Database;
 using Dometrain.Monolith.Api.Enrollments;
@@ -9,6 +10,7 @@ using Dometrain.Monolith.Api.Orders;
 using Dometrain.Monolith.Api.ShoppingCarts;
 using Dometrain.Monolith.Api.Students;
 using FluentValidation;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
@@ -26,6 +28,15 @@ builder.AddServiceDefaults();
 builder.AddNpgsqlDataSource("dometrain");
 builder.AddAzureCosmosDBClient("cosmosdb");
 builder.AddRedisClient("redis");
+builder.Services.AddMassTransit(x =>
+{
+    x.AddConsumers(typeof(IApiMarker).Assembly);
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host(new Uri(config["ConnectionStrings:rabbitmq"]!));
+        cfg.ConfigureEndpoints(context);
+    });
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();

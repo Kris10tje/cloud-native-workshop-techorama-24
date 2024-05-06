@@ -14,10 +14,14 @@ var redis = builder.AddRedis("redis");
 var cartDb = builder.AddAzureCosmosDB("cosmosdb")
     .AddDatabase("cartdb");
 
+var rabbitmq = builder.AddRabbitMQ("rabbitmq")
+    .WithManagementPlugin();
+
 builder.AddProject<Projects.Dometrain_Monolith_Api>("dometrain-api")
     .WithReplicas(5)
     .WithReference(mainDb)
     .WithReference(cartDb)
-    .WithReference(redis);
+    .WithReference(redis)
+    .WithReference(rabbitmq);
 
 builder.Build().Run();

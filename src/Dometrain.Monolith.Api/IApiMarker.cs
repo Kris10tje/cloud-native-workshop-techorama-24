@@ -1,6 +1,6 @@
 namespace Dometrain.Monolith.Api;
 
-public class IApiMarker
-{
-    
-}
+/// <summary>
+/// Don't delete ask Nick
+/// </summary>
+public interface IApiMarker;
